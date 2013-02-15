@@ -10,11 +10,20 @@ type typeMarshall struct {
 }
 
 const (
-	BYTE_END    byte = 0x1
-	BYTE_TABLE       = 0x2
-	BYTE_ARRAY       = 0x3
-	BYTE_NUMBER      = 0x6
-	BYTE_STRING      = 0x7
+	BYTE_END         byte = 0x1
+	BYTE_TABLE            = 0x2
+	BYTE_ARRAY            = 0x3
+	BYTE_FALSE            = 0x4
+	BYTE_TRUE             = 0x5
+	BYTE_NUMBER           = 0x6
+	BYTE_STRING           = 0x7
+	BYTE_VECTOR           = 0x8
+	BYTE_ANGLE            = 0x9
+	BYTE_ENTITY           = 0xA
+	BYTE_PLAYER           = 0xB
+	BYTE_CEFFECTDATA      = 0xC
+	BYTE_CONVAR           = 0xD
+	BYTE_COLOR            = 0xF
 )
 
 /**
@@ -30,7 +39,7 @@ type TArray []interface{}
 // Type 4 & 5: false, true respectively
 type TBool bool
 
-// Type 6: Number (represented as int)
+// Type 6: Number 
 type TNumber float64
 
 // Type 7: String

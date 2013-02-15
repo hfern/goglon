@@ -37,7 +37,7 @@ func _unserialize(reader *bufio.Reader) (interface{}, error) {
 }
 
 func _TableDecode(in *bufio.Reader) interface{} {
-	assertNextByte(in, 0x2)
+	assertNextByte(in, BYTE_TABLE)
 	tbl := TTable{}
 
 	for {
@@ -69,7 +69,7 @@ func _TableDecode(in *bufio.Reader) interface{} {
 }
 
 func _StringDecode(in *bufio.Reader) interface{} {
-	assertNextByte(in, 0x7)
+	assertNextByte(in, BYTE_STRING)
 
 	str := bytes.Buffer{}
 	escape := false
@@ -97,7 +97,7 @@ func _StringDecode(in *bufio.Reader) interface{} {
 }
 
 func _NumberDecode(in *bufio.Reader) interface{} {
-	assertNextByte(in, 0x6)
+	assertNextByte(in, BYTE_NUMBER)
 
 	num := bytes.Buffer{} // stored as string within the text file
 
@@ -141,7 +141,7 @@ func _NumberDecode(in *bufio.Reader) interface{} {
 }
 
 func _ArrayDecode(in *bufio.Reader) interface{} {
-	assertNextByte(in, 0x3)
+	assertNextByte(in, BYTE_ARRAY)
 	arr := make(TArray, 0, 0)
 
 	for {
@@ -163,4 +163,33 @@ func _ArrayDecode(in *bufio.Reader) interface{} {
 		}
 	}
 	return arr
+}
+
+func _FalseDecode(in *bufio.Reader) interface{} {
+	assertNextByte(in, BYTE_FALSE)
+	return false
+}
+
+func _TrueDecode(in *bufio.Reader) interface{} {
+	assertNextByte(in, BYTE_TRUE)
+	return true
+}
+
+func _VectorDecode(in *bufio.Reader) interface{} {
+	assertNextByte(in, BYTE_VECTOR)
+	vec := TVector{
+		X: _NumberDecode(in).(float64),
+		Y: _NumberDecode(in).(float64),
+		Z: _NumberDecode(in).(float64),
+	}
+	return vec
+}
+
+func _AngleDecode(in *bufio.Reader) interface{} {
+	assertNextByte(in, BYTE_ANGLE)
+	return TAngle{
+		P: _NumberDecode(in).(float64),
+		Y: _NumberDecode(in).(float64),
+		R: _NumberDecode(in).(float64),
+	}
 }

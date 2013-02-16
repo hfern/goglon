@@ -6,7 +6,7 @@ import (
 
 type typeMarshall struct {
 	encoder func(*bufio.Writer, interface{})
-	decoder func(*bufio.Reader) interface{}
+	decoder func(*bufio.Reader, bool) interface{}
 }
 
 const (
@@ -32,6 +32,9 @@ const (
 
 // Type 2: Table
 type TTable map[interface{}]interface{}
+
+// Stringy version of Table, useful for marshalling to other formats
+type TTableStringy map[string]interface{}
 
 // Type 3: Array
 type TArray []interface{}

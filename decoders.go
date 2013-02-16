@@ -7,19 +7,20 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"reflect"
 	"strconv"
 )
 
-func Decode(reader *bufio.Reader) (interface{}, error) {
+func Decode(reader *bufio.Reader, stringkeys bool) (interface{}, error) {
 	//buf := bufio.NewReader(*reader)
-	return _unserialize(reader)
+	return _unserialize(reader, stringkeys)
 }
 
-func DecodeFromFile(file *os.File) (interface{}, error) {
-	return Decode(bufio.NewReader(file))
+func DecodeFromFile(file *os.File, stringkeys bool) (interface{}, error) {
+	return Decode(bufio.NewReader(file), stringkeys)
 }
 
-func _unserialize(reader *bufio.Reader) (interface{}, error) {
+func _unserialize(reader *bufio.Reader, stringkeys bool) (interface{}, error) {
 	// read type byte
 	bt, _ := reader.Peek(1)
 	typ := bt[0]
@@ -31,44 +32,58 @@ func _unserialize(reader *bufio.Reader) (interface{}, error) {
 		return nil, errors.New(fmt.Sprintf(fmtstr, typ))
 	}
 
-	val := marshallers.decoder(reader)
+	val := marshallers.decoder(reader, stringkeys)
 
 	return val, nil
 }
 
-func _TableDecode(in *bufio.Reader) interface{} {
+func _TableDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_TABLE)
 	tbl := TTable{}
+	tbls := TTableStringy{}
 
 	for {
 		bt, err := in.Peek(1)
 		opcode := bt[0]
 		if err != nil {
-			return tbl
+			break
 		}
 		// last opcode to end is reached
 		if opcode == BYTE_END {
 			in.ReadByte() // advance pointer to consume peek opcode
-			return tbl
+			break
 		}
-
-		key, err := _unserialize(in)
+		_key, err := _unserialize(in, stringkeys)
 		if err != nil {
 			panic(err)
 		}
 
-		val, err := _unserialize(in)
+		val, err := _unserialize(in, stringkeys)
 		if err != nil {
 			panic(err)
 		}
 
-		tbl[key] = val
+		if stringkeys {
+			var key string
+			typename := reflect.TypeOf(_key).Name()
+			if typename == "string" {
+				key = _key.(string)
+			} else {
+				key = fmt.Sprint(_key)
+			}
+			tbls[key] = val
+		} else {
+			tbl[_key] = val
+		}
 	}
 
+	if stringkeys {
+		return tbls
+	}
 	return tbl
 }
 
-func _StringDecode(in *bufio.Reader) interface{} {
+func _StringDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_STRING)
 
 	str := bytes.Buffer{}
@@ -96,7 +111,7 @@ func _StringDecode(in *bufio.Reader) interface{} {
 	return str.String()
 }
 
-func _NumberDecode(in *bufio.Reader) interface{} {
+func _NumberDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_NUMBER)
 
 	num := bytes.Buffer{} // stored as string within the text file
@@ -140,7 +155,7 @@ func _NumberDecode(in *bufio.Reader) interface{} {
 	return int64(0)
 }
 
-func _ArrayDecode(in *bufio.Reader) interface{} {
+func _ArrayDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_ARRAY)
 	arr := make(TArray, 0, 0)
 
@@ -155,7 +170,7 @@ func _ArrayDecode(in *bufio.Reader) interface{} {
 			in.ReadByte()
 			return arr
 		} else {
-			val, err := _unserialize(in)
+			val, err := _unserialize(in, stringkeys)
 			if err != nil {
 				panic(err)
 			}
@@ -165,31 +180,31 @@ func _ArrayDecode(in *bufio.Reader) interface{} {
 	return arr
 }
 
-func _FalseDecode(in *bufio.Reader) interface{} {
+func _FalseDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_FALSE)
 	return false
 }
 
-func _TrueDecode(in *bufio.Reader) interface{} {
+func _TrueDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_TRUE)
 	return true
 }
 
-func _VectorDecode(in *bufio.Reader) interface{} {
+func _VectorDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_VECTOR)
 	vec := TVector{
-		X: _NumberDecode(in).(float64),
-		Y: _NumberDecode(in).(float64),
-		Z: _NumberDecode(in).(float64),
+		X: _NumberDecode(in, stringkeys).(float64),
+		Y: _NumberDecode(in, stringkeys).(float64),
+		Z: _NumberDecode(in, stringkeys).(float64),
 	}
 	return vec
 }
 
-func _AngleDecode(in *bufio.Reader) interface{} {
+func _AngleDecode(in *bufio.Reader, stringkeys bool) interface{} {
 	assertNextByte(in, BYTE_ANGLE)
 	return TAngle{
-		P: _NumberDecode(in).(float64),
-		Y: _NumberDecode(in).(float64),
-		R: _NumberDecode(in).(float64),
+		P: _NumberDecode(in, stringkeys).(float64),
+		Y: _NumberDecode(in, stringkeys).(float64),
+		R: _NumberDecode(in, stringkeys).(float64),
 	}
 }

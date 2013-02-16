@@ -1,7 +1,6 @@
 package goglon
 
 var typeswitch map[byte]typeMarshall
-
 var Opcodes []byte
 
 func init() {
@@ -17,9 +16,7 @@ func init() {
 	}
 
 	Opcodes = make([]byte, len(typeswitch))
-
 	i := 0
-
 	for code, _ := range typeswitch {
 		Opcodes[i] = code
 		i++
